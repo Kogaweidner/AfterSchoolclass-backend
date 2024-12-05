@@ -2,7 +2,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.1",
-    "mongodb": "^3.6.3"
+    "mongodb": "^3.6.3",
+    "frontend-repo":"git+https://github.com/Kogaweidner/Afterschoolclass-Front-end/tree/main"
   },
   "name": "coursework",
   "version": "1.0.0",
