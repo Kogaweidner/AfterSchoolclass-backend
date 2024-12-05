@@ -1,11 +1,13 @@
 const express = require('express');
 const path = require('path');
 const { MongoClient, ObjectID } = require('mongodb');
+const path = require('path');
 
 const app = express();
 
 // Middleware configuration
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 app.set('port', process.env.PORT || 3000);
 
 app.use((req, res, next) => {
@@ -40,7 +42,7 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Route to serve frontend (index.html) for any unrecognized routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  res.sendFile(path.join(__dirname, 'frontend','dist','index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
