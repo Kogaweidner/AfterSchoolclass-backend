@@ -1,9 +1,16 @@
 //Create Express.js instance
 var express = require("express")
+const cors = require('cors')
 const app = express()
 
-//configuring Express.js
+const corsOptions = {
+    origin: 'https://kogaweidner.github.io',
+    methods: ['GET', 'POST','PUT','DELETE'],
+    allowedHeaders: ['Content-Type']
+}
 
+app.use(cors(corsOptions));
+//configuring Express.js
 app.use(express.json())
 app.set('port',3000)
 app.use((req,res,next) =>{
