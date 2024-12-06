@@ -1,3 +1,5 @@
+Back up app.js
+
 //Create Express.js instance
 var express = require("express")
 const cors = require('cors')
@@ -9,9 +11,10 @@ const corsOptions = {
     allowedHeaders: ['Content-Type']
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors(corsOptions));
-
+app.use((req, res, next) => {
+    console.log('[${new Date().toISOString()}] ${req.method} ${req.url}');
+})
 //configuring Express.js
 app.use(express.json())
 app.set('port',3000)
@@ -33,9 +36,7 @@ MongoClient.connect('mongodb+srv://sokolig:Wednesday@cluster0.n4bti.mongodb.net/
     db = client.db('Classes')
 })
 
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-})
+
 //display message for root path to show that API is working
 app.get('/',(req,res,next)=>{
     res.send("Select a collection, e.g., /collection/messages")
