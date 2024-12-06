@@ -12,8 +12,8 @@ This Vue. js web application, created by Muhammad Daffa and hosted on Github, em
 
 # Backend - Express.js Application
 
-- Github repository - [Vue.js app repository](https://github.com/Kogaweidner/AfterSchoolclass-backend)
+- Github repository - [Express.js repository](https://github.com/Kogaweidner/AfterSchoolclass-backend)
 
 # Backend - Postman
 
-- Github repository - [Vue.js app repository](https://web.postman.co/workspace/My-Workspace~86cbf8d6-8e29-47be-8f3e-49f5d2bd1a95/collection/39767298-9c845d2c-7e25-4483-b591-f6f13a24365d)
+- Github repository - [Postman Collection](https://elements.getpostman.com/redirect?entityId=39767298-9c845d2c-7e25-4483-b591-f6f13a24365d&entityType=collection)
