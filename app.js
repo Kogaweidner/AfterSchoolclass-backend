@@ -1,73 +1,112 @@
-const express = require('express');
-const cors = require('cors');
-const { MongoClient } = require('mongodb');
-const lessonsRoutes = require('./routes/lessons');
-const ordersRoutes = require('./routes/orders');
-const logger = require('morgan');
-const fs = require('fs');
-const path = require('path');
+// Create Express.js instance
+var express = require("express")
+const cors = require('cors')
+const app = express()
 
-const app = express();
-
-// Use the PORT environment variable if it's set, otherwise default to 3000
-const port = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors());
-app.use(logger('dev'));
-app.use(express.static('public'));
-app.use(express.json());
-
-
-const functionalLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'functional.log'), { flags: 'a' });
-
-
-logger.token('message', function (req, res) { return req.message });
-
-// Register the logger middleware
-function logFunction(req, res, next) {
-    const originalSend = res.send;
-    res.send = function (data) {
-        if (req.message) {
-            const logEntry = `${new Date().toISOString()} ${req.method} ${req.originalUrl} Message: ${req.message}\n`;
-            functionalLogStream.write(logEntry);
-        }
-        originalSend.apply(res, arguments);
-    }
-    next();
+const corsOptions = {
+    origin: 'https://kogaweidner.github.io',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type']
 }
 
+app.use(cors(corsOptions));
+
+// Configuring Express.js
+app.use(express.json())
+app.set('port', 3000)
 app.use((req, res, next) => {
-    functionalLogStream.write(`Received a ${req.method} request at ${req.url}\n`);
+    res.setHeader('Access-Control-Allow-Origin', 'https://kogaweidner.github.io'); // Allow only specific origin
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+    res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
+
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`); // General request logging
     next();
 });
 
-app.use('/static', express.static(path.join(__dirname, 'images')));
+// Connecting to MongoDB
+const MongoClient = require('mongodb').MongoClient;
 
+let db;
+// Inside the connect code is the connection string of your server
+MongoClient.connect('mongodb+srv://sokolig:Wednesday@cluster0.n4bti.mongodb.net/', (err, client) => {
+    db = client.db('Classes')
+})
 
-// MongoDB connection
-const mongoUri = 'mongodb+srv://mf883:0X5coeqrw5mFjRYS@mdx.nfeuxor.mongodb.net/?retryWrites=true&w=majority'; // MongoDB URI
-const client = new MongoClient(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
+// Display message for root path to show that API is working
+app.get('/', (req, res, next) => {
+    res.send("Select a collection, e.g., /collection/messages")
+})
 
-async function connectDb() {
-    try {
-        await client.connect();
-        console.log('Connected to MongoDB');
-    } catch (e) {
-        console.error(e);
-    }
-}
+// Getting the collection name
+app.param("collectionName", (req, res, next, collectionName) => {
+    req.collection = db.collection(collectionName)
+    return next()
+})
 
-connectDb();
+// Retrieve all objects from collection
+app.get('/collection/:collectionName', (req, res, next) => {
+    req.collection.find({}).toArray((e, results) => {
+        if (e) return next(e)
+        res.send(results)
+    })
+})
 
-// Routes
-app.use('/lessons', lessonsRoutes(client));
-app.use('/orders', ordersRoutes(client));
+app.post('/collection/:collectionName', (req, res, next) => {
+    req.collection.insertOne(req.body, (e, results) => {
+        if (e) return next(e)
+        console.log(`[${new Date().toISOString()}] POST to collection ${req.params.collectionName}:`, req.body); // Log POST data
+        res.send(results)
+    })
+})
 
-const accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'access.log'), { flags: 'a' });
-app.use(logger('combined', { stream: accessLogStream }));
+const ObjectID = require('mongodb').ObjectID;
 
+app.get('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.findOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
+        if (e) return next(e)
+        res.send(result)
+    })
+})
 
+app.put('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.updateOne(
+        { _id: new ObjectID(req.params.id) },
+        { $set: req.body },
+        (e, result) => {
+            if (e) return next(e)
+            console.log(`[${new Date().toISOString()}] PUT to collection ${req.params.collectionName}, ID: ${req.params.id}:`, req.body); // Log PUT data
+            res.send({ msg: 'success' })
+        }
+    )
+})
+
+app.delete('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.deleteOne(
+        { _id: ObjectID(req.params.id) }, (e, result) => {
+            if (e) return next(e)
+            console.log(`[${new Date().toISOString()}] DELETE from collection ${req.params.collectionName}, ID: ${req.params.id}`); // Log DELETE action
+            res.send((result.result.n === 1) ?
+                { msg: 'success' } : { msg: 'error' })
+        }
+    )
+})
+
+// Example logging for specific routes
+app.post('/add-to-cart', (req, res) => {
+    const { itemId, quantity } = req.body;
+    console.log(`[${new Date().toISOString()}] ADD_TO_CART - Item: ${itemId}, Quantity: ${quantity}`);
+    res.status(200).send('Item added to cart');
+});
+
+app.post('/submit-order', (req, res) => {
+    const { orderId, userId } = req.body;
+    console.log(`[${new Date().toISOString()}] SUBMIT_ORDER - OrderID: ${orderId}, UserID: ${userId}`);
+    res.status(200).send('Order submitted');
+});
+
+// Start server
+const port = process.env.PORT || 3000
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    console.log(`Express.js server running at http://localhost:${port}`);
 });
