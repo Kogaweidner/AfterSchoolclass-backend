@@ -106,10 +106,8 @@ app.post('/submit-order', (req, res) => {
     res.status(200).send('Order submitted');
 });
 
-var publicPath = path.resolve(__dirname, 'public');
 var imagePath = path.resolve(__dirname, 'images');
 app.use (express.static(imagePath));
-app.use(express.static(publicPath));
 app.use(function (request, response){
     response.writeHead(200,{
         'Content-Type': 'text/html'
